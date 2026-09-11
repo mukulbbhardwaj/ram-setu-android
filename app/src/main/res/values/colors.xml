@@ -1,0 +1,8 @@
+<resources>
+    <color name="primary">#FF6F00</color>
+    <color name="primary_dark">#E65100</color>
+    <color name="accent">#FFD54F</color>
+    <color name="ocean_dark">#0A192F</color>
+    <color name="ocean_blue">#1E3A8A</color>
+    <color name="sindoor_red">#D32F2F</color>
+</resources>

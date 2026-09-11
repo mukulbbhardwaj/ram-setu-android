@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">राम सेतु</string>
+    <string name="app_name_en">Ram Setu</string>
+    <string name="subtitle">The Sacred Floating Bridge</string>
+    <string name="start_game">खेल प्रारम्भ करें</string>
+    <string name="high_score">सर्वश्रेष्ठ स्कोर</string>
+    <string name="stone_collection">पत्थर संग्रह</string>
+    <string name="game_complete">आपका खेल सम्पूर्ण !</string>
+    <string name="stones_collected_format">आपने %d पत्थर संगृहीत किए |</string>
+    <string name="replay">पुनः खेलें</string>
+    <string name="katha">श्री राम कथा</string>
+    <string name="settings">सेटिंग्स</string>
+    <string name="sound">ध्वनि</string>
+    <string name="haptics">हैप्टिक्स (कंपन)</string>
+    <string name="music">संगीत</string>
+    <string name="haptic_strength">हैप्टिक तीव्रता</string>
+    <string name="haptic_off">बंद</string>
+    <string name="haptic_subtle">हल्का</string>
+    <string name="haptic_medium">मध्यम</string>
+    <string name="haptic_strong">प्रबल</string>
+</resources>
