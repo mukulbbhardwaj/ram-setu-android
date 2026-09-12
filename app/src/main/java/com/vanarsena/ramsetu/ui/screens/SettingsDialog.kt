@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -31,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -43,6 +47,7 @@ import com.vanarsena.ramsetu.ui.theme.CardSurfaceDark
 import com.vanarsena.ramsetu.ui.theme.GoldAccent
 import com.vanarsena.ramsetu.ui.theme.OceanNavy
 import com.vanarsena.ramsetu.ui.theme.SaffronPrimary
+import com.vanarsena.ramsetu.ui.theme.SindoorRed
 import com.vanarsena.ramsetu.ui.theme.TextGold
 import com.vanarsena.ramsetu.ui.theme.TextPrimary
 
@@ -58,6 +63,33 @@ fun SettingsDialog(
     var isMusicEnabled by remember { mutableStateOf(preferencesManager.isMusicEnabled) }
     var isSoundEnabled by remember { mutableStateOf(preferencesManager.isSoundEnabled) }
     var selectedIntensity by remember { mutableStateOf(preferencesManager.hapticIntensity) }
+    var showPrivacyPolicy by remember { mutableStateOf(false) }
+    var showResetConfirm by remember { mutableStateOf(false) }
+
+    if (showPrivacyPolicy) {
+        PrivacyPolicyDialog(
+            hapticManager = hapticManager,
+            onDismiss = { showPrivacyPolicy = false }
+        )
+    }
+
+    if (showResetConfirm) {
+        ResetDataDialog(
+            hapticManager = hapticManager,
+            onConfirm = {
+                preferencesManager.clearLocalData()
+                isMusicEnabled = preferencesManager.isMusicEnabled
+                isSoundEnabled = preferencesManager.isSoundEnabled
+                selectedIntensity = preferencesManager.hapticIntensity
+                hapticManager.intensity = selectedIntensity
+                audioEngine.isMusicEnabled = isMusicEnabled
+                audioEngine.isSoundEnabled = isSoundEnabled
+                onLanguageChange(preferencesManager.language)
+                showResetConfirm = false
+            },
+            onDismiss = { showResetConfirm = false }
+        )
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Box(
@@ -68,7 +100,10 @@ fun SettingsDialog(
                 .border(2.dp, GoldAccent.copy(alpha = 0.8f), RoundedCornerShape(24.dp))
                 .padding(24.dp)
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
                 Text(
                     text = stringResource(R.string.settings_title),
                     color = GoldAccent,
@@ -204,7 +239,38 @@ fun SettingsDialog(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(18.dp))
+
+                Text(
+                    text = stringResource(R.string.privacy_policy),
+                    color = TextGold,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .clickable {
+                            hapticManager.playButtonTap()
+                            showPrivacyPolicy = true
+                        }
+                        .padding(vertical = 4.dp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = stringResource(R.string.reset_data),
+                    color = SindoorRed.copy(alpha = 0.95f),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .clickable {
+                            hapticManager.playButtonTap()
+                            showResetConfirm = true
+                        }
+                        .padding(vertical = 4.dp)
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Button(
                     onClick = {
@@ -291,5 +357,74 @@ private fun LanguageChip(
             color = if (selected) Color.White else TextGold,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
         )
+    }
+}
+
+@Composable
+private fun ResetDataDialog(
+    hapticManager: HapticManager,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(CardSurfaceDark)
+                .border(2.dp, GoldAccent.copy(alpha = 0.8f), RoundedCornerShape(24.dp))
+                .padding(24.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = stringResource(R.string.reset_data_title),
+                    color = GoldAccent,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.reset_data_body),
+                    color = TextPrimary.copy(alpha = 0.92f),
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                Button(
+                    onClick = {
+                        hapticManager.playButtonTap()
+                        onConfirm()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SindoorRed),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.reset_data_confirm),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = {
+                        hapticManager.playButtonTap()
+                        onDismiss()
+                    },
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.reset_data_cancel),
+                        color = TextGold,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
     }
 }

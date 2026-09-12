@@ -1,0 +1,69 @@
+CREATE APP
+App name: Ram Setu
+Package name: com.vanarsena.ramsetu
+Default language: English (United States) – en-US
+App or game: Game
+Free or paid: Free
+Contains ads: No
+Declarations: check Developer Program Policies, US export laws, Play App Signing
+
+STORE SETTINGS
+App category: Game / Casual
+Email: your support email
+Website: optional
+Phone: optional
+
+ADS
+Does this app contain ads? No
+
+PRIVACY POLICY
+Host play-store/privacy-policy.html publicly, then paste the URL.
+GitHub Pages path if you enable it on this repo:
+https://mukulbbhardwaj.github.io/ram-setu-android/play-store/privacy-policy.html
+
+DATA SAFETY
+Does your app collect or share any of the required user data types? No
+Privacy policy URL: required (same URL as above)
+
+TARGET AUDIENCE
+Select 13+, 16+, 18+ (skip Designed for Families unless you want extra review)
+Not primarily for children: Yes (leave Families program off)
+
+CONTENT RATING (IARC)
+Violence: No
+Sexual content: No
+Profanity: No
+Controlled substances: No
+Gambling / contests: No
+User interaction / UGC / chat: No
+Shares location: No
+Digital goods / in-app purchases: No
+This should rate as Everyone / PEGI 3.
+
+NEWS APP
+No
+
+COVID-19
+No
+
+FINANCIAL FEATURES
+No
+
+HEALTH
+No
+
+GOVERNMENT / POLITICAL
+No
+
+DATA DELETION
+Not required (no accounts)
+
+RELEASE
+Country: start with India, then expand if you want
+Testing: Internal testing first, then Production
+App bundle: app/build/outputs/bundle/release/app-release.aab
+Play App Signing: let Google generate and manage the app signing key; you keep the upload key in keystore/
+
+SCREENSHOTS
+Need at least 2 phone screenshots (4+ is better). Portrait 1080x1920 from an emulator or device.
+Capture: main menu, gameplay with stones, pause/settings, game over.

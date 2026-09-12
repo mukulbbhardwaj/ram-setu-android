@@ -73,4 +73,15 @@
     <string name="ach_total_desc">Collect 500 stones across all runs.</string>
     <string name="ach_record_title">Record</string>
     <string name="ach_record_desc">Set a new high score.</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="privacy_contact">themukulbhardwaj@gmail.com</string>
+    <string name="privacy_policy_body">Ram Setu (“the app”) is published by Vanarsena.\n\nThis Privacy Policy explains how the app accesses, collects, uses, and shares user and device data. The app does not access personal or sensitive user data.\n\nWhat we collect\nThe app does not collect, transmit, or share personal information. It has no internet access, no accounts, no ads, and no analytics.\n\nData stored only on your device\nTo run the game, the app stores on this device:\n• High score, total stones, and achievements\n• Sound, music, haptic, language, and tutorial settings\n• An interrupted run so a game can resume after the app is interrupted\n\nThis data never leaves the device except if you use your phone’s built-in device-to-device transfer. Vanarsena cannot read it.\n\nPermissions\nVibrate — used only for optional haptic feedback. You can turn haptics off in Settings.\n\nSharing\nWe do not share user data with third parties. The app includes no advertising, analytics, or social SDKs.\n\nSecurity\nThere is no server, so no data is sent over a network. Local settings remain on your device.\n\nRetention and deletion\nOn-device data is kept until you delete it. You can erase it in Settings → Reset saved data, or by uninstalling the app. There are no accounts to delete.\n\nChildren\nThe app is a general-audience game. We do not knowingly collect personal data from children.\n\nContact\nQuestions about this policy: themukulbhardwaj@gmail.com\n\nEffective date: 12 September 2026</string>
+    <string name="katha_disclaimer">Ram Setu is an original entertainment game inspired by the Ramayana. It is not affiliated with, endorsed by, or an official app of any government, temple, or religious organization.</string>
+    <string name="reset_data">Reset saved data</string>
+    <string name="reset_data_title">Reset saved data?</string>
+    <string name="reset_data_body">Your best score, achievements, and settings will be removed from this device. This cannot be undone.</string>
+    <string name="reset_data_confirm">Reset</string>
+    <string name="reset_data_cancel">Cancel</string>
 </resources>
+

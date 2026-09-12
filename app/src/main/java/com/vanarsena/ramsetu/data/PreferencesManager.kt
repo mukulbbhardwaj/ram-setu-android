@@ -106,6 +106,10 @@ class PreferencesManager(context: Context) {
             .apply()
     }
 
+    fun clearLocalData() {
+        prefs.edit().clear().apply()
+    }
+
     companion object {
         private const val KEY_HIGH_SCORE = "key_high_score"
         private const val KEY_TOTAL_STONES = "key_total_stones"
