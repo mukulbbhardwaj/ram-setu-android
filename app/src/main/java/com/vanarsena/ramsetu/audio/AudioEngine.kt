@@ -140,7 +140,16 @@ class AudioEngine(private val context: Context) {
     }
 
     private fun requestAudioFocus(): Boolean {
-        val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+        val request = focusRequest ?: buildAudioFocusRequest().also { focusRequest = it }
+        return audioManager.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+    }
+
+    private fun abandonAudioFocus() {
+        focusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+    }
+
+    private fun buildAudioFocusRequest(): AudioFocusRequest {
+        return AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_GAME)
@@ -163,13 +172,6 @@ class AudioEngine(private val context: Context) {
                 }
             }
             .build()
-        focusRequest = request
-        return audioManager.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
-    }
-
-    private fun abandonAudioFocus() {
-        focusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
-        focusRequest = null
     }
 
     private fun ensureTapWav(): File {
