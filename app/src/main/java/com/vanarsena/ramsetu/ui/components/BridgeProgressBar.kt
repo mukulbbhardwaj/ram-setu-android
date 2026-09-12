@@ -27,6 +27,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.vanarsena.ramsetu.R
 import com.vanarsena.ramsetu.ui.theme.GoldAccent
 import com.vanarsena.ramsetu.ui.theme.OceanDeep
 import com.vanarsena.ramsetu.ui.theme.OceanNavy
@@ -56,7 +58,7 @@ private val StraitWater = Brush.horizontalGradient(
 fun BridgeProgressBar(
     progress: Float,
     speedLabel: String,
-    score: Int,
+    lap: Int,
     modifier: Modifier = Modifier
 ) {
     val animatedProgress by animateFloatAsState(
@@ -76,11 +78,11 @@ fun BridgeProgressBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            ShoreLabel(text = "रामेश्वरम्")
+            ShoreLabel(text = stringResource(R.string.shore_rameswaram))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "सेतु  $percent%",
+                    text = stringResource(R.string.bridge_percent, lap, percent),
                     color = TextGold,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
@@ -89,7 +91,7 @@ fun BridgeProgressBar(
                 SpeedChip(label = speedLabel)
             }
 
-            ShoreLabel(text = "लंका")
+            ShoreLabel(text = stringResource(R.string.shore_lanka))
         }
 
         Spacer(modifier = Modifier.height(8.dp))

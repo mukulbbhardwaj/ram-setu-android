@@ -29,11 +29,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.vanarsena.ramsetu.R
+import com.vanarsena.ramsetu.audio.AudioEngine
 import com.vanarsena.ramsetu.audio.HapticManager
 import com.vanarsena.ramsetu.data.HapticIntensity
 import com.vanarsena.ramsetu.data.PreferencesManager
@@ -48,6 +50,9 @@ import com.vanarsena.ramsetu.ui.theme.TextPrimary
 fun SettingsDialog(
     preferencesManager: PreferencesManager,
     hapticManager: HapticManager,
+    audioEngine: AudioEngine,
+    language: String,
+    onLanguageChange: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var isMusicEnabled by remember { mutableStateOf(preferencesManager.isMusicEnabled) }
@@ -65,7 +70,7 @@ fun SettingsDialog(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "सेटिंग्स (Settings)",
+                    text = stringResource(R.string.settings_title),
                     color = GoldAccent,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
@@ -73,93 +78,48 @@ fun SettingsDialog(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // 1. Music Toggle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_music_note),
-                            contentDescription = "Music",
-                            tint = GoldAccent,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = "  संगीत (Music)",
-                            color = TextPrimary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                SettingsToggleRow(
+                    icon = R.drawable.ic_music_note,
+                    iconDescription = stringResource(R.string.music),
+                    label = stringResource(R.string.music),
+                    checked = isMusicEnabled,
+                    onCheckedChange = {
+                        isMusicEnabled = it
+                        preferencesManager.isMusicEnabled = it
+                        audioEngine.isMusicEnabled = it
+                        hapticManager.playButtonTap()
                     }
-                    Switch(
-                        checked = isMusicEnabled,
-                        onCheckedChange = {
-                            isMusicEnabled = it
-                            preferencesManager.isMusicEnabled = it
-                            hapticManager.playButtonTap()
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = SaffronPrimary,
-                            checkedTrackColor = GoldAccent
-                        )
-                    )
-                }
+                )
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 2. Sound Effects Toggle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(
-                                id = if (isSoundEnabled) R.drawable.ic_volume_up else R.drawable.ic_volume_off
-                            ),
-                            contentDescription = "Sound",
-                            tint = GoldAccent,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = "  ध्वनि प्रभाव (SFX)",
-                            color = TextPrimary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                SettingsToggleRow(
+                    icon = if (isSoundEnabled) R.drawable.ic_volume_up else R.drawable.ic_volume_off,
+                    iconDescription = stringResource(R.string.sound),
+                    label = stringResource(R.string.sound_effects),
+                    checked = isSoundEnabled,
+                    onCheckedChange = {
+                        isSoundEnabled = it
+                        preferencesManager.isSoundEnabled = it
+                        audioEngine.isSoundEnabled = it
+                        hapticManager.playButtonTap()
                     }
-                    Switch(
-                        checked = isSoundEnabled,
-                        onCheckedChange = {
-                            isSoundEnabled = it
-                            preferencesManager.isSoundEnabled = it
-                            hapticManager.playButtonTap()
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = SaffronPrimary,
-                            checkedTrackColor = GoldAccent
-                        )
-                    )
-                }
+                )
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                // 3. Haptic Intensity
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_vibration),
-                        contentDescription = "Haptics",
+                        contentDescription = stringResource(R.string.haptics),
                         tint = GoldAccent,
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
-                        text = "  हैप्टिक्स तीव्रता (Haptics)",
+                        text = "  ${stringResource(R.string.haptic_strength)}",
                         color = TextPrimary,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium
@@ -168,16 +128,15 @@ fun SettingsDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // 4. Haptic Intensity Options: OFF, SUBTLE, MEDIUM, STRONG
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     val levels = listOf(
-                        HapticIntensity.OFF to "बंद",
-                        HapticIntensity.SUBTLE to "हल्का",
-                        HapticIntensity.MEDIUM to "मध्यम",
-                        HapticIntensity.STRONG to "प्रबल"
+                        HapticIntensity.OFF to stringResource(R.string.haptic_off),
+                        HapticIntensity.SUBTLE to stringResource(R.string.haptic_subtle),
+                        HapticIntensity.MEDIUM to stringResource(R.string.haptic_medium),
+                        HapticIntensity.STRONG to stringResource(R.string.haptic_strong)
                     )
 
                     levels.forEach { (intensity, label) ->
@@ -185,6 +144,7 @@ fun SettingsDialog(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
+                                .height(48.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(if (isSelected) SaffronPrimary else OceanNavy)
                                 .border(
@@ -196,10 +156,8 @@ fun SettingsDialog(
                                     selectedIntensity = intensity
                                     preferencesManager.hapticIntensity = intensity
                                     hapticManager.intensity = intensity
-                                    // Trigger test haptic impulse
                                     hapticManager.playStoneTap()
-                                }
-                                .padding(vertical = 10.dp),
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -212,6 +170,40 @@ fun SettingsDialog(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(18.dp))
+
+                Text(
+                    text = stringResource(R.string.language),
+                    color = TextPrimary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    LanguageChip(
+                        label = stringResource(R.string.language_hindi),
+                        selected = language == "hi",
+                        onClick = {
+                            onLanguageChange("hi")
+                            hapticManager.playButtonTap()
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    LanguageChip(
+                        label = stringResource(R.string.language_english),
+                        selected = language == "en",
+                        onClick = {
+                            onLanguageChange("en")
+                            hapticManager.playButtonTap()
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
@@ -221,11 +213,83 @@ fun SettingsDialog(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = SaffronPrimary),
                     shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth(0.5f)
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .height(48.dp)
                 ) {
-                    Text(text = "स्वीकारें", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = stringResource(R.string.accept),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SettingsToggleRow(
+    icon: Int,
+    iconDescription: String,
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = iconDescription,
+                tint = GoldAccent,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "  $label",
+                color = TextPrimary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = SaffronPrimary,
+                checkedTrackColor = GoldAccent
+            )
+        )
+    }
+}
+
+@Composable
+private fun LanguageChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .height(48.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (selected) SaffronPrimary else OceanNavy)
+            .border(
+                1.dp,
+                if (selected) GoldAccent else Color.Gray.copy(alpha = 0.4f),
+                RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = if (selected) Color.White else TextGold,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+        )
     }
 }

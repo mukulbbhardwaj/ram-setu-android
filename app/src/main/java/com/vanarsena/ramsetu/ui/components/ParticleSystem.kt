@@ -6,6 +6,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.vanarsena.ramsetu.engine.ComboPopup
 import com.vanarsena.ramsetu.engine.Particle
 import com.vanarsena.ramsetu.ui.theme.GoldAccent
@@ -39,12 +41,12 @@ fun DrawScope.drawComboPopups(
         drawContext.canvas.nativeCanvas.apply {
             val paint = Paint().apply {
                 color = GoldAccent.copy(alpha = popup.alpha).toArgb()
-                textSize = 46f
+                textSize = 18.sp.toPx()
                 isFakeBoldText = true
                 textAlign = Paint.Align.CENTER
                 typeface = Typeface.DEFAULT_BOLD
                 setShadowLayer(
-                    12f, 0f, 4f,
+                    8.dp.toPx(), 0f, 2.dp.toPx(),
                     SunsetOrange.copy(alpha = popup.alpha * 0.9f).toArgb()
                 )
             }

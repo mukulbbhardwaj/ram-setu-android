@@ -24,10 +24,12 @@ import com.vanarsena.ramsetu.ui.theme.SunsetOrange
 import kotlin.math.sin
 
 @Composable
-fun OceanBackground(modifier: Modifier = Modifier) {
+fun OceanBackground(
+    modifier: Modifier = Modifier,
+    reduceMotion: Boolean = false
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "oceanWaves")
-
-    val wavePhase1 by infiniteTransition.animateFloat(
+    val animatedPhase1 by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = (Math.PI * 2).toFloat(),
         animationSpec = infiniteRepeatable(
@@ -36,8 +38,7 @@ fun OceanBackground(modifier: Modifier = Modifier) {
         ),
         label = "wave1"
     )
-
-    val wavePhase2 by infiniteTransition.animateFloat(
+    val animatedPhase2 by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = (Math.PI * 2).toFloat(),
         animationSpec = infiniteRepeatable(
@@ -46,6 +47,8 @@ fun OceanBackground(modifier: Modifier = Modifier) {
         ),
         label = "wave2"
     )
+    val wavePhase1 = if (reduceMotion) 0f else animatedPhase1
+    val wavePhase2 = if (reduceMotion) 0f else animatedPhase2
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width

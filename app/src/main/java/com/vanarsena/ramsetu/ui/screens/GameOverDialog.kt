@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.vanarsena.ramsetu.R
 import com.vanarsena.ramsetu.audio.HapticManager
+import com.vanarsena.ramsetu.ui.rememberReduceMotion
 import com.vanarsena.ramsetu.ui.theme.CardSurfaceDark
 import com.vanarsena.ramsetu.ui.theme.GoldAccent
 import com.vanarsena.ramsetu.ui.theme.SindoorRed
@@ -55,10 +57,11 @@ fun GameOverDialog(
     onRestart: () -> Unit,
     onMainMenu: () -> Unit
 ) {
+    val reduceMotion = rememberReduceMotion()
     val infiniteTransition = rememberInfiniteTransition(label = "crownGlow")
     val crownScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
-        targetValue = 1.15f,
+        targetValue = if (reduceMotion) 1.0f else 1.15f,
         animationSpec = infiniteRepeatable(
             animation = tween(1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -91,7 +94,7 @@ fun GameOverDialog(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_crown),
-                        contentDescription = "Crown",
+                        contentDescription = stringResource(R.string.crown_cd),
                         tint = GoldAccent,
                         modifier = Modifier.size(68.dp)
                     )
@@ -101,7 +104,7 @@ fun GameOverDialog(
 
                 // Title: "आपका खेल सम्पूर्ण !"
                 Text(
-                    text = "आपका खेल सम्पूर्ण !",
+                    text = stringResource(R.string.game_complete),
                     color = GoldAccent,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.ExtraBold,
@@ -117,7 +120,7 @@ fun GameOverDialog(
                             .padding(horizontal = 14.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "★ नया कीर्तिमान! (New Record) ★",
+                            text = stringResource(R.string.new_record),
                             color = Color.White,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -138,7 +141,7 @@ fun GameOverDialog(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "आपने $score पत्थर संगृहीत किए |",
+                        text = stringResource(R.string.stones_collected_format, score),
                         color = TextPrimary,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
@@ -153,7 +156,7 @@ fun GameOverDialog(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "सर्वश्रेष्ठ",
+                                text = stringResource(R.string.best),
                                 color = TextGold.copy(alpha = 0.7f),
                                 fontSize = 12.sp
                             )
@@ -167,7 +170,7 @@ fun GameOverDialog(
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "अधिकतम कॉम्बो",
+                                text = stringResource(R.string.max_combo),
                                 color = TextGold.copy(alpha = 0.7f),
                                 fontSize = 12.sp
                             )
@@ -185,7 +188,7 @@ fun GameOverDialog(
 
                 Image(
                     painter = painterResource(id = R.drawable.stone_replay),
-                    contentDescription = "पुनः खेलें",
+                    contentDescription = stringResource(R.string.replay),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .size(96.dp)
@@ -199,16 +202,16 @@ fun GameOverDialog(
 
                 // Menu Button
                 Text(
-                    text = "मुख्य पृष्ठ पर लौटें",
+                    text = stringResource(R.string.return_main_menu),
                     color = TextGold.copy(alpha = 0.85f),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    modifier = Modifier
-                        .clickable {
-                            hapticManager.playButtonTap()
-                            onMainMenu()
-                        }
-                        .padding(8.dp)
+                            modifier = Modifier
+                                .clickable {
+                                    hapticManager.playButtonTap()
+                                    onMainMenu()
+                                }
+                                .padding(12.dp)
                 )
             }
         }

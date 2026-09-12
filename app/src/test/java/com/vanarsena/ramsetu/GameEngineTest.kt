@@ -1,14 +1,22 @@
 package com.vanarsena.ramsetu
 
 import com.vanarsena.ramsetu.data.HapticIntensity
+import com.vanarsena.ramsetu.engine.HitGrade
+import com.vanarsena.ramsetu.engine.HIT_ZONE_Y
 import com.vanarsena.ramsetu.engine.SpeedTiers
 import com.vanarsena.ramsetu.engine.Stone
+import com.vanarsena.ramsetu.engine.bridgeProgressFraction
+import com.vanarsena.ramsetu.engine.computeBridgeLap
+import com.vanarsena.ramsetu.engine.consumeSpawnTime
+import com.vanarsena.ramsetu.engine.findLowestStoneInLane
 import com.vanarsena.ramsetu.engine.findTappedStone
+import com.vanarsena.ramsetu.engine.gradeHit
 import com.vanarsena.ramsetu.engine.stoneSize
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GameEngineTest {
@@ -60,6 +68,56 @@ class GameEngineTest {
         assertEquals(0.4f, HapticIntensity.SUBTLE.multiplier, 0.001f)
         assertEquals(0.8f, HapticIntensity.MEDIUM.multiplier, 0.001f)
         assertEquals(1.0f, HapticIntensity.STRONG.multiplier, 0.001f)
+    }
+
+    @Test
+    fun hitOnGoldLineIsPerfect() {
+        assertEquals(HitGrade.PERFECT, gradeHit(HIT_ZONE_Y))
+        assertEquals(HitGrade.PERFECT, gradeHit(HIT_ZONE_Y + 0.05f))
+        assertEquals(HitGrade.GOOD, gradeHit(HIT_ZONE_Y + 0.10f))
+        assertEquals(HitGrade.OK, gradeHit(0.2f))
+    }
+
+    @Test
+    fun spawnAccumulatorKeepsRemainder() {
+        val tick = consumeSpawnTime(accumulatedMs = 2500L, intervalMs = 1000L)
+        assertEquals(2, tick.spawnCount)
+        assertEquals(500L, tick.remainderMs)
+    }
+
+    @Test
+    fun spawnAccumulatorCapsCatchUp() {
+        val tick = consumeSpawnTime(accumulatedMs = 10_000L, intervalMs = 500L, maxSpawns = 3)
+        assertEquals(3, tick.spawnCount)
+        assertEquals(8500L, tick.remainderMs)
+    }
+
+    @Test
+    fun bridgeLapDoesNotResetAtHundred() {
+        assertEquals(1, computeBridgeLap(0))
+        assertEquals(1, computeBridgeLap(99))
+        assertEquals(1, computeBridgeLap(100))
+        assertEquals(2, computeBridgeLap(101))
+        assertEquals(1f, bridgeProgressFraction(100), 0.001f)
+        assertEquals(0.01f, bridgeProgressFraction(101), 0.001f)
+    }
+
+    @Test
+    fun stoneKeepsSpawnFallDuration() {
+        val stone = Stone(id = 1L, lane = 0, fallDurationMs = 3400L)
+        assertEquals(3400L, stone.fallDurationMs)
+        val faster = Stone(id = 2L, lane = 1, fallDurationMs = 1650L)
+        assertEquals(1650L, faster.fallDurationMs)
+    }
+
+    @Test
+    fun keyboardLanePicksLowestStone() {
+        val upper = Stone(id = 1L, lane = 2, yProgress = 0.4f)
+        val lower = Stone(id = 2L, lane = 2, yProgress = 0.8f)
+        val other = Stone(id = 3L, lane = 1, yProgress = 0.9f)
+        val picked = findLowestStoneInLane(listOf(upper, lower, other), 2)
+        assertNotNull(picked)
+        assertEquals(2L, picked!!.id)
     }
 }
 

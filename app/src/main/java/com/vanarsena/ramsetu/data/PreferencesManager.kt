@@ -10,6 +10,13 @@ enum class HapticIntensity(val multiplier: Float) {
     STRONG(1.0f)
 }
 
+data class InterruptedRun(
+    val score: Int,
+    val combo: Int,
+    val maxCombo: Int,
+    val tierLevel: Int
+)
+
 class PreferencesManager(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("ram_setu_prefs", Context.MODE_PRIVATE)
@@ -45,13 +52,58 @@ class PreferencesManager(context: Context) {
         get() = prefs.getString(KEY_LANGUAGE, "hi") ?: "hi"
         set(value) = prefs.edit().putString(KEY_LANGUAGE, value).apply()
 
+    var hasSeenTutorial: Boolean
+        get() = prefs.getBoolean(KEY_SEEN_TUTORIAL, false)
+        set(value) = prefs.edit().putBoolean(KEY_SEEN_TUTORIAL, value).apply()
+
     fun updateScore(newScore: Int): Boolean {
         totalStones += newScore
         if (newScore > highScore) {
             highScore = newScore
-            return true // New high score!
+            return true
         }
         return false
+    }
+
+    fun unlockAchievement(id: String): Boolean {
+        val current = HashSet(prefs.getStringSet(KEY_ACHIEVEMENTS, emptySet()) ?: emptySet())
+        if (id in current) return false
+        current.add(id)
+        prefs.edit().putStringSet(KEY_ACHIEVEMENTS, current).apply()
+        return true
+    }
+
+    fun unlockedAchievementIds(): Set<String> =
+        prefs.getStringSet(KEY_ACHIEVEMENTS, emptySet()) ?: emptySet()
+
+    fun saveInterruptedRun(score: Int, combo: Int, maxCombo: Int, tierLevel: Int) {
+        prefs.edit()
+            .putBoolean(KEY_INTERRUPTED, true)
+            .putInt(KEY_INTERRUPTED_SCORE, score)
+            .putInt(KEY_INTERRUPTED_COMBO, combo)
+            .putInt(KEY_INTERRUPTED_MAX_COMBO, maxCombo)
+            .putInt(KEY_INTERRUPTED_TIER, tierLevel)
+            .apply()
+    }
+
+    fun interruptedRun(): InterruptedRun? {
+        if (!prefs.getBoolean(KEY_INTERRUPTED, false)) return null
+        return InterruptedRun(
+            score = prefs.getInt(KEY_INTERRUPTED_SCORE, 0),
+            combo = prefs.getInt(KEY_INTERRUPTED_COMBO, 0),
+            maxCombo = prefs.getInt(KEY_INTERRUPTED_MAX_COMBO, 0),
+            tierLevel = prefs.getInt(KEY_INTERRUPTED_TIER, 0)
+        )
+    }
+
+    fun clearInterruptedRun() {
+        prefs.edit()
+            .putBoolean(KEY_INTERRUPTED, false)
+            .remove(KEY_INTERRUPTED_SCORE)
+            .remove(KEY_INTERRUPTED_COMBO)
+            .remove(KEY_INTERRUPTED_MAX_COMBO)
+            .remove(KEY_INTERRUPTED_TIER)
+            .apply()
     }
 
     companion object {
@@ -61,5 +113,12 @@ class PreferencesManager(context: Context) {
         private const val KEY_MUSIC_ENABLED = "key_music_enabled"
         private const val KEY_HAPTIC_INTENSITY = "key_haptic_intensity"
         private const val KEY_LANGUAGE = "key_language"
+        private const val KEY_SEEN_TUTORIAL = "key_seen_tutorial"
+        private const val KEY_ACHIEVEMENTS = "key_achievements"
+        private const val KEY_INTERRUPTED = "key_interrupted"
+        private const val KEY_INTERRUPTED_SCORE = "key_interrupted_score"
+        private const val KEY_INTERRUPTED_COMBO = "key_interrupted_combo"
+        private const val KEY_INTERRUPTED_MAX_COMBO = "key_interrupted_max_combo"
+        private const val KEY_INTERRUPTED_TIER = "key_interrupted_tier"
     }
 }

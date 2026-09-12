@@ -18,9 +18,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,13 +40,16 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vanarsena.ramsetu.R
+import com.vanarsena.ramsetu.audio.AudioEngine
 import com.vanarsena.ramsetu.audio.HapticManager
 import com.vanarsena.ramsetu.data.PreferencesManager
 import com.vanarsena.ramsetu.ui.components.OceanBackground
+import com.vanarsena.ramsetu.ui.rememberReduceMotion
 import com.vanarsena.ramsetu.ui.theme.CardSurfaceDark
 import com.vanarsena.ramsetu.ui.theme.GoldAccent
 import com.vanarsena.ramsetu.ui.theme.OceanDeep
@@ -55,17 +60,21 @@ import com.vanarsena.ramsetu.ui.theme.TextPrimary
 fun MainMenuScreen(
     preferencesManager: PreferencesManager,
     hapticManager: HapticManager,
+    audioEngine: AudioEngine,
+    language: String,
+    onLanguageChange: (String) -> Unit,
     onStartGame: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showKathaDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showAchievementsDialog by remember { mutableStateOf(false) }
+    val reduceMotion = rememberReduceMotion()
 
-    // Floating animation for sacred title rock
     val infiniteTransition = rememberInfiniteTransition(label = "titleFloat")
     val floatOffset by infiniteTransition.animateFloat(
-        initialValue = -8f,
-        targetValue = 8f,
+        initialValue = if (reduceMotion) 0f else -8f,
+        targetValue = if (reduceMotion) 0f else 8f,
         animationSpec = infiniteRepeatable(
             animation = tween(2200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -75,7 +84,7 @@ fun MainMenuScreen(
 
     val buttonPulse by infiniteTransition.animateFloat(
         initialValue = 1.0f,
-        targetValue = 1.04f,
+        targetValue = if (reduceMotion) 1.0f else 1.04f,
         animationSpec = infiniteRepeatable(
             animation = tween(1400, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -84,26 +93,25 @@ fun MainMenuScreen(
     )
 
     Box(modifier = modifier.fillMaxSize()) {
-        // 1. Animated Sacred Ocean Background
-        OceanBackground()
+        OceanBackground(reduceMotion = reduceMotion)
 
-        // 2. Main Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 32.dp),
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Bar: Story & Settings Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Katha (Story) Button
                 Box(
                     modifier = Modifier
+                        .height(48.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(OceanDeep.copy(alpha = 0.75f))
                         .border(1.dp, GoldAccent.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
@@ -111,18 +119,19 @@ fun MainMenuScreen(
                             hapticManager.playButtonTap()
                             showKathaDialog = true
                         }
-                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                        .padding(horizontal = 14.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_info),
-                            contentDescription = "कथा",
+                            contentDescription = stringResource(R.string.katha),
                             tint = GoldAccent,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "कथा",
+                            text = stringResource(R.string.katha),
                             color = TextGold,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
@@ -130,37 +139,56 @@ fun MainMenuScreen(
                     }
                 }
 
-                // Settings Button
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(OceanDeep.copy(alpha = 0.75f))
-                        .border(1.dp, GoldAccent.copy(alpha = 0.5f), CircleShape)
-                        .clickable {
-                            hapticManager.playButtonTap()
-                            showSettingsDialog = true
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_settings),
-                        contentDescription = "सेटिंग्स",
-                        tint = GoldAccent,
-                        modifier = Modifier.size(20.dp)
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(OceanDeep.copy(alpha = 0.75f))
+                            .border(1.dp, GoldAccent.copy(alpha = 0.5f), CircleShape)
+                            .clickable {
+                                hapticManager.playButtonTap()
+                                showAchievementsDialog = true
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_crown),
+                            contentDescription = stringResource(R.string.achievements),
+                            tint = GoldAccent,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(OceanDeep.copy(alpha = 0.75f))
+                            .border(1.dp, GoldAccent.copy(alpha = 0.5f), CircleShape)
+                            .clickable {
+                                hapticManager.playButtonTap()
+                                showSettingsDialog = true
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_settings),
+                            contentDescription = stringResource(R.string.settings),
+                            tint = GoldAccent,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 
-            // Center Area: Title & Floating Rock
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.offset(y = floatOffset.dp)
             ) {
-                // Sacred Stone Logo
                 Image(
                     painter = painterResource(id = R.drawable.ram_setu_pathar),
-                    contentDescription = "Ram Setu Pathar",
+                    contentDescription = stringResource(R.string.logo_cd),
                     modifier = Modifier
                         .size(220.dp, 120.dp)
                         .shadow(16.dp, RoundedCornerShape(100.dp))
@@ -168,7 +196,6 @@ fun MainMenuScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // High Score Badge
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(24.dp))
@@ -182,13 +209,16 @@ fun MainMenuScreen(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_crown),
-                            contentDescription = "Crown",
+                            contentDescription = stringResource(R.string.crown_cd),
                             tint = GoldAccent,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "सर्वश्रेष्ठ स्कोर : ${preferencesManager.highScore}",
+                            text = stringResource(
+                                R.string.high_score_format,
+                                preferencesManager.highScore
+                            ),
                             color = TextPrimary,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
@@ -197,14 +227,13 @@ fun MainMenuScreen(
                 }
             }
 
-            // Bottom Area: Start Button & Stats
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.stone_start),
-                    contentDescription = "चलो शुरू करते हैं",
+                    contentDescription = stringResource(R.string.start_game_cd),
                     contentScale = ContentScale.FillWidth,
                     modifier = Modifier
                         .fillMaxWidth(0.86f)
@@ -221,7 +250,10 @@ fun MainMenuScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "कुल संगृहीत पत्थर: ${preferencesManager.totalStones}",
+                    text = stringResource(
+                        R.string.total_stones_format,
+                        preferencesManager.totalStones
+                    ),
                     color = TextGold.copy(alpha = 0.85f),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
@@ -229,7 +261,6 @@ fun MainMenuScreen(
             }
         }
 
-        // Dialogs
         if (showKathaDialog) {
             KathaDialog(
                 hapticManager = hapticManager,
@@ -241,7 +272,18 @@ fun MainMenuScreen(
             SettingsDialog(
                 preferencesManager = preferencesManager,
                 hapticManager = hapticManager,
+                audioEngine = audioEngine,
+                language = language,
+                onLanguageChange = onLanguageChange,
                 onDismiss = { showSettingsDialog = false }
+            )
+        }
+
+        if (showAchievementsDialog) {
+            AchievementsDialog(
+                preferencesManager = preferencesManager,
+                hapticManager = hapticManager,
+                onDismiss = { showAchievementsDialog = false }
             )
         }
     }

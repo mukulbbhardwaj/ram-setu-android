@@ -1,12 +1,20 @@
 package com.vanarsena.ramsetu.engine
 
 import androidx.compose.ui.graphics.Color
+import kotlin.math.abs
 
 enum class GameStatus {
     MENU,
+    COUNTDOWN,
     PLAYING,
     PAUSED,
     GAME_OVER
+}
+
+enum class HitGrade {
+    PERFECT,
+    GOOD,
+    OK
 }
 
 data class SpeedTier(
@@ -25,14 +33,76 @@ val SpeedTiers = listOf(
     SpeedTier(level = 4, minScore = 800, spawnIntervalMs = 500L, fallDurationMs = 1650L, label = "3.0x")
 )
 
+const val LANE_COUNT = 4
+const val HIT_ZONE_Y = 0.88f
+const val MISS_Y = 1.05f
+const val PERFECT_WINDOW = 0.06f
+const val GOOD_WINDOW = 0.12f
+const val BRIDGE_STONES_PER_LAP = 100
+const val FIXED_STEP_SEC = 1f / 60f
+const val MAX_PHYSICS_STEPS = 4
+const val SPAWN_CATCH_UP_MAX = 3
+const val COUNTDOWN_SECONDS = 3f
+const val PARTICLE_GRAVITY = 0.55f
+
+fun gradeHit(yProgress: Float): HitGrade {
+    val distance = abs(yProgress - HIT_ZONE_Y)
+    return when {
+        distance <= PERFECT_WINDOW -> HitGrade.PERFECT
+        distance <= GOOD_WINDOW -> HitGrade.GOOD
+        else -> HitGrade.OK
+    }
+}
+
+fun hitGradeLabel(grade: HitGrade): String = when (grade) {
+    HitGrade.PERFECT -> "Perfect"
+    HitGrade.GOOD -> "Good"
+    HitGrade.OK -> "OK"
+}
+
+fun computeBridgeLap(score: Int): Int =
+    if (score <= 0) 1 else ((score - 1) / BRIDGE_STONES_PER_LAP) + 1
+
+fun bridgeProgressFraction(score: Int): Float {
+    if (score > 0 && score % BRIDGE_STONES_PER_LAP == 0) return 1f
+    return (score % BRIDGE_STONES_PER_LAP) / BRIDGE_STONES_PER_LAP.toFloat()
+}
+
+data class SpawnTick(
+    val spawnCount: Int,
+    val remainderMs: Long
+)
+
+fun consumeSpawnTime(
+    accumulatedMs: Long,
+    intervalMs: Long,
+    maxSpawns: Int = SPAWN_CATCH_UP_MAX
+): SpawnTick {
+    if (intervalMs <= 0L) return SpawnTick(0, accumulatedMs)
+    var acc = accumulatedMs
+    var n = 0
+    while (acc >= intervalMs && n < maxSpawns) {
+        n++
+        acc -= intervalMs
+    }
+    return SpawnTick(n, acc)
+}
+
+fun findLowestStoneInLane(stones: List<Stone>, lane: Int): Stone? =
+    stones
+        .filter { !it.isTapped && it.lane == lane }
+        .maxByOrNull { it.yProgress }
+
 data class Stone(
     val id: Long,
-    val lane: Int,            // 0, 1, 2, 3
-    var yProgress: Float = 0f, // 0f (top) to 1.15f (bottom boundary)
+    val lane: Int,
+    var yProgress: Float = 0f,
     var isTapped: Boolean = false,
     var alpha: Float = 1f,
     var scale: Float = 1f,
-    var rotation: Float = 0f
+    var rotation: Float = 0f,
+    val fallDurationMs: Long = SpeedTiers[0].fallDurationMs,
+    val spinDegPerSec: Float = 0f
 )
 
 /** Shared visual size so rendering and hit-testing stay in lockstep. */
@@ -87,7 +157,7 @@ fun findTappedStone(
     slopPx: Float = 0f
 ): Stone? {
     if (screenWidth <= 0f || screenHeight <= 0f) return null
-    val laneWidth = screenWidth / 4f
+    val laneWidth = screenWidth / LANE_COUNT
     return stones
         .asSequence()
         .filter { !it.isTapped }
