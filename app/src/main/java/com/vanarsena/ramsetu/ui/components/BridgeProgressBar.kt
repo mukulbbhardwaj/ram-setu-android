@@ -60,7 +60,8 @@ fun BridgeProgressBar(
     progress: Float,
     stageLabel: String,
     lap: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
@@ -72,7 +73,10 @@ fun BridgeProgressBar(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(
+                horizontal = if (compact) 0.dp else 16.dp,
+                vertical = if (compact) 0.dp else 4.dp
+            )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -81,15 +85,17 @@ fun BridgeProgressBar(
         ) {
             ShoreLabel(text = stringResource(R.string.shore_rameswaram))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stringResource(R.string.bridge_percent, lap, percent),
-                    color = TextGold,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                StageChip(label = stageLabel)
+            if (!compact) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.bridge_percent, lap, percent),
+                        color = TextGold,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    StageChip(label = stageLabel)
+                }
             }
 
             ShoreLabel(text = stringResource(R.string.shore_lanka))

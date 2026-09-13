@@ -48,11 +48,14 @@ import com.vanarsena.ramsetu.R
 import com.vanarsena.ramsetu.audio.AudioEngine
 import com.vanarsena.ramsetu.audio.HapticManager
 import com.vanarsena.ramsetu.data.PreferencesManager
+import com.vanarsena.ramsetu.engine.reachedLanka
+import com.vanarsena.ramsetu.engine.stonesToLanka
 import com.vanarsena.ramsetu.ui.components.OceanBackground
 import com.vanarsena.ramsetu.ui.rememberReduceMotion
 import com.vanarsena.ramsetu.ui.theme.CardSurfaceDark
 import com.vanarsena.ramsetu.ui.theme.GoldAccent
 import com.vanarsena.ramsetu.ui.theme.OceanDeep
+import com.vanarsena.ramsetu.ui.theme.SindoorRed
 import com.vanarsena.ramsetu.ui.theme.TextGold
 import com.vanarsena.ramsetu.ui.theme.TextPrimary
 
@@ -204,6 +207,8 @@ fun MainMenuScreen(
                         .border(1.dp, GoldAccent.copy(alpha = 0.6f), RoundedCornerShape(24.dp))
                         .padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
+                    val bestScore = preferencesManager.highScore
+                    val lankaComplete = reachedLanka(bestScore)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
@@ -215,15 +220,43 @@ fun MainMenuScreen(
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(
-                                R.string.high_score_format,
-                                preferencesManager.highScore
-                            ),
-                            color = TextPrimary,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Column(horizontalAlignment = Alignment.Start) {
+                            if (bestScore == 0) {
+                                Text(
+                                    text = stringResource(R.string.menu_setu_goal),
+                                    color = TextPrimary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            } else if (!lankaComplete) {
+                                Text(
+                                    text = stringResource(R.string.menu_setu_unfinished),
+                                    color = SindoorRed,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Text(
+                                    text = stringResource(
+                                        R.string.menu_best_to_lanka,
+                                        bestScore,
+                                        stonesToLanka(bestScore)
+                                    ),
+                                    color = TextPrimary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            } else {
+                                Text(
+                                    text = stringResource(
+                                        R.string.high_score_format,
+                                        bestScore
+                                    ),
+                                    color = TextPrimary,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
             }

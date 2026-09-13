@@ -40,7 +40,14 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.vanarsena.ramsetu.R
 import com.vanarsena.ramsetu.audio.HapticManager
+import com.vanarsena.ramsetu.engine.SetuStage
+import com.vanarsena.ramsetu.engine.crossingProgressToLanka
+import com.vanarsena.ramsetu.engine.isNearLanka
+import com.vanarsena.ramsetu.engine.reachedLanka
+import com.vanarsena.ramsetu.engine.stonesToLanka
+import com.vanarsena.ramsetu.ui.components.BridgeProgressBar
 import com.vanarsena.ramsetu.ui.rememberReduceMotion
+import com.vanarsena.ramsetu.ui.setuStageShortName
 import com.vanarsena.ramsetu.ui.theme.CardSurfaceDark
 import com.vanarsena.ramsetu.ui.theme.GoldAccent
 import com.vanarsena.ramsetu.ui.theme.SindoorRed
@@ -50,6 +57,7 @@ import com.vanarsena.ramsetu.ui.theme.TextPrimary
 @Composable
 fun GameOverDialog(
     score: Int,
+    stage: SetuStage,
     highScore: Int,
     isNewRecord: Boolean,
     maxCombo: Int,
@@ -58,10 +66,13 @@ fun GameOverDialog(
     onMainMenu: () -> Unit
 ) {
     val reduceMotion = rememberReduceMotion()
+    val completedCrossing = reachedLanka(score)
+    val remaining = stonesToLanka(score)
+    val nearMiss = isNearLanka(score)
     val infiniteTransition = rememberInfiniteTransition(label = "crownGlow")
     val crownScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
-        targetValue = if (reduceMotion) 1.0f else 1.15f,
+        targetValue = if (reduceMotion || !completedCrossing) 1.0f else 1.15f,
         animationSpec = infiniteRepeatable(
             animation = tween(1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -78,38 +89,70 @@ fun GameOverDialog(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(32.dp))
                 .background(CardSurfaceDark)
-                .border(2.dp, GoldAccent, RoundedCornerShape(32.dp))
+                .border(
+                    2.dp,
+                    if (completedCrossing) GoldAccent else SindoorRed.copy(alpha = 0.85f),
+                    RoundedCornerShape(32.dp)
+                )
                 .padding(28.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Crown Icon with Glow
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .scale(crownScale),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_crown),
-                        contentDescription = stringResource(R.string.crown_cd),
-                        tint = GoldAccent,
-                        modifier = Modifier.size(68.dp)
-                    )
+                if (completedCrossing) {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .scale(crownScale),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_crown),
+                            contentDescription = stringResource(R.string.crown_cd),
+                            tint = GoldAccent,
+                            modifier = Modifier.size(68.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Title: "आपका खेल सम्पूर्ण !"
                 Text(
-                    text = stringResource(R.string.game_complete),
-                    color = GoldAccent,
+                    text = stringResource(
+                        if (completedCrossing) R.string.lanka_reached else R.string.setu_unfinished
+                    ),
+                    color = if (completedCrossing) GoldAccent else SindoorRed,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Center
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = stringResource(
+                        if (completedCrossing) {
+                            R.string.lanka_reached_body
+                        } else {
+                            R.string.setu_unfinished_body
+                        }
+                    ),
+                    color = TextPrimary.copy(alpha = 0.92f),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center
+                )
+
+                if (nearMiss) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.near_lanka, remaining),
+                        color = GoldAccent,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
                 if (isNewRecord) {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -128,9 +171,28 @@ fun GameOverDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Score Card
+                BridgeProgressBar(
+                    progress = crossingProgressToLanka(score),
+                    stageLabel = setuStageShortName(stage),
+                    lap = 1,
+                    compact = true
+                )
+
+                if (!completedCrossing && !nearMiss) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.stones_from_lanka, remaining),
+                        color = TextGold,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -184,7 +246,7 @@ fun GameOverDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Image(
                     painter = painterResource(id = R.drawable.stone_replay),
@@ -200,18 +262,17 @@ fun GameOverDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Menu Button
                 Text(
                     text = stringResource(R.string.return_main_menu),
                     color = TextGold.copy(alpha = 0.85f),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                            modifier = Modifier
-                                .clickable {
-                                    hapticManager.playButtonTap()
-                                    onMainMenu()
-                                }
-                                .padding(12.dp)
+                    modifier = Modifier
+                        .clickable {
+                            hapticManager.playButtonTap()
+                            onMainMenu()
+                        }
+                        .padding(12.dp)
                 )
             }
         }

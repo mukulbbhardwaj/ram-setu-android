@@ -24,6 +24,8 @@ const val PERFECT_WINDOW = 0.06f
 const val GOOD_WINDOW = 0.12f
 /** One Rameswaram→Lanka crossing (~five construction days in Valmiki Yuddha Kanda 22). */
 const val BRIDGE_STONES_PER_LAP = 170
+/** Close enough that the unfinished gap should sting and pull another run. */
+const val NEAR_LANKA_STONES = 25
 const val FIXED_STEP_SEC = 1f / 60f
 const val MAX_PHYSICS_STEPS = 4
 const val SPAWN_CATCH_UP_MAX = 3
@@ -52,6 +54,19 @@ fun bridgeProgressFraction(score: Int): Float {
     if (score > 0 && score % BRIDGE_STONES_PER_LAP == 0) return 1f
     return (score % BRIDGE_STONES_PER_LAP) / BRIDGE_STONES_PER_LAP.toFloat()
 }
+
+fun reachedLanka(score: Int): Boolean = score >= BRIDGE_STONES_PER_LAP
+
+fun stonesToLanka(score: Int): Int =
+    (BRIDGE_STONES_PER_LAP - score).coerceAtLeast(0)
+
+fun isNearLanka(score: Int): Boolean {
+    val remaining = stonesToLanka(score)
+    return remaining in 1..NEAR_LANKA_STONES
+}
+
+fun crossingProgressToLanka(score: Int): Float =
+    if (reachedLanka(score)) 1f else (score.coerceAtLeast(0) / BRIDGE_STONES_PER_LAP.toFloat())
 
 data class SpawnTick(
     val spawnCount: Int,

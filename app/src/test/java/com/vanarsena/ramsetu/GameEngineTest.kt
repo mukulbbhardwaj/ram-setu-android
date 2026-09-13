@@ -9,13 +9,17 @@ import com.vanarsena.ramsetu.engine.Stone
 import com.vanarsena.ramsetu.engine.bridgeProgressFraction
 import com.vanarsena.ramsetu.engine.computeBridgeLap
 import com.vanarsena.ramsetu.engine.consumeSpawnTime
+import com.vanarsena.ramsetu.engine.crossingProgressToLanka
 import com.vanarsena.ramsetu.engine.difficultyAt
 import com.vanarsena.ramsetu.engine.findLowestStoneInLane
 import com.vanarsena.ramsetu.engine.findTappedStone
 import com.vanarsena.ramsetu.engine.gradeHit
+import com.vanarsena.ramsetu.engine.isNearLanka
+import com.vanarsena.ramsetu.engine.reachedLanka
 import com.vanarsena.ramsetu.engine.setuStageForScore
 import com.vanarsena.ramsetu.engine.stageAllowsDoubleSpawn
 import com.vanarsena.ramsetu.engine.stoneSize
+import com.vanarsena.ramsetu.engine.stonesToLanka
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -114,6 +118,30 @@ class GameEngineTest {
         assertEquals(2, computeBridgeLap(171))
         assertEquals(1f, bridgeProgressFraction(170), 0.001f)
         assertEquals(1f / 170f, bridgeProgressFraction(171), 0.001f)
+    }
+
+    @Test
+    fun lankaIsTheWinAndNearMissPullsReplay() {
+        assertFalse(reachedLanka(0))
+        assertFalse(reachedLanka(169))
+        assertTrue(reachedLanka(170))
+        assertTrue(reachedLanka(300))
+
+        assertEquals(170, stonesToLanka(0))
+        assertEquals(1, stonesToLanka(169))
+        assertEquals(0, stonesToLanka(170))
+        assertEquals(0, stonesToLanka(400))
+
+        assertFalse(isNearLanka(0))
+        assertFalse(isNearLanka(144))
+        assertTrue(isNearLanka(145))
+        assertTrue(isNearLanka(169))
+        assertFalse(isNearLanka(170))
+
+        assertEquals(0f, crossingProgressToLanka(0), 0.001f)
+        assertEquals(169f / 170f, crossingProgressToLanka(169), 0.001f)
+        assertEquals(1f, crossingProgressToLanka(170), 0.001f)
+        assertEquals(1f, crossingProgressToLanka(250), 0.001f)
     }
 
     @Test

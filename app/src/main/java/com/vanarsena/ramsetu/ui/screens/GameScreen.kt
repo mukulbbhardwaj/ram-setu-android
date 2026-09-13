@@ -451,6 +451,7 @@ fun GameScreen(
         if (gameEngine.status == GameStatus.GAME_OVER) {
             GameOverDialog(
                 score = gameEngine.score,
+                stage = gameEngine.currentStage,
                 highScore = preferencesManager.highScore,
                 isNewRecord = gameEngine.isNewHighScore,
                 maxCombo = gameEngine.maxCombo,
