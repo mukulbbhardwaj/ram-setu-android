@@ -43,6 +43,7 @@ import com.vanarsena.ramsetu.audio.AudioEngine
 import com.vanarsena.ramsetu.audio.HapticManager
 import com.vanarsena.ramsetu.data.HapticIntensity
 import com.vanarsena.ramsetu.data.PreferencesManager
+import com.vanarsena.ramsetu.ui.ProvideAppLanguage
 import com.vanarsena.ramsetu.ui.theme.CardSurfaceDark
 import com.vanarsena.ramsetu.ui.theme.GoldAccent
 import com.vanarsena.ramsetu.ui.theme.OceanNavy
@@ -68,6 +69,7 @@ fun SettingsDialog(
 
     if (showPrivacyPolicy) {
         PrivacyPolicyDialog(
+            language = language,
             hapticManager = hapticManager,
             onDismiss = { showPrivacyPolicy = false }
         )
@@ -75,6 +77,7 @@ fun SettingsDialog(
 
     if (showResetConfirm) {
         ResetDataDialog(
+            language = language,
             hapticManager = hapticManager,
             onConfirm = {
                 preferencesManager.clearLocalData()
@@ -92,6 +95,7 @@ fun SettingsDialog(
     }
 
     Dialog(onDismissRequest = onDismiss) {
+        ProvideAppLanguage(language) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -291,6 +295,7 @@ fun SettingsDialog(
                 }
             }
         }
+        }
     }
 }
 
@@ -362,11 +367,13 @@ private fun LanguageChip(
 
 @Composable
 private fun ResetDataDialog(
+    language: String,
     hapticManager: HapticManager,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
+        ProvideAppLanguage(language) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -425,6 +432,7 @@ private fun ResetDataDialog(
                     )
                 }
             }
+        }
         }
     }
 }

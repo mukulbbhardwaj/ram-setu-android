@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.vanarsena.ramsetu.R
 import com.vanarsena.ramsetu.audio.HapticManager
+import com.vanarsena.ramsetu.ui.ProvideAppLanguage
 import com.vanarsena.ramsetu.ui.theme.CardSurfaceDark
 import com.vanarsena.ramsetu.ui.theme.GoldAccent
 import com.vanarsena.ramsetu.ui.theme.SaffronPrimary
@@ -34,10 +35,12 @@ import com.vanarsena.ramsetu.ui.theme.TextPrimary
 
 @Composable
 fun PrivacyPolicyDialog(
+    language: String,
     hapticManager: HapticManager,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
+        ProvideAppLanguage(language) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -87,6 +90,7 @@ fun PrivacyPolicyDialog(
                     )
                 }
             }
+        }
         }
     }
 }

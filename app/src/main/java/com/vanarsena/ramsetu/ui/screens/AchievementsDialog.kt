@@ -30,6 +30,7 @@ import com.vanarsena.ramsetu.R
 import com.vanarsena.ramsetu.audio.HapticManager
 import com.vanarsena.ramsetu.data.Achievement
 import com.vanarsena.ramsetu.data.PreferencesManager
+import com.vanarsena.ramsetu.ui.ProvideAppLanguage
 import com.vanarsena.ramsetu.ui.theme.CardSurfaceDark
 import com.vanarsena.ramsetu.ui.theme.GoldAccent
 import com.vanarsena.ramsetu.ui.theme.OceanNavy
@@ -39,6 +40,7 @@ import com.vanarsena.ramsetu.ui.theme.TextPrimary
 
 @Composable
 fun AchievementsDialog(
+    language: String,
     preferencesManager: PreferencesManager,
     hapticManager: HapticManager,
     onDismiss: () -> Unit
@@ -46,6 +48,7 @@ fun AchievementsDialog(
     val unlocked = preferencesManager.unlockedAchievementIds()
 
     Dialog(onDismissRequest = onDismiss) {
+        ProvideAppLanguage(language) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -126,6 +129,7 @@ fun AchievementsDialog(
                     )
                 }
             }
+        }
         }
     }
 }

@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
@@ -57,7 +58,7 @@ private val StraitWater = Brush.horizontalGradient(
 @Composable
 fun BridgeProgressBar(
     progress: Float,
-    speedLabel: String,
+    stageLabel: String,
     lap: Int,
     modifier: Modifier = Modifier
 ) {
@@ -88,7 +89,7 @@ fun BridgeProgressBar(
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                SpeedChip(label = speedLabel)
+                StageChip(label = stageLabel)
             }
 
             ShoreLabel(text = stringResource(R.string.shore_lanka))
@@ -153,20 +154,24 @@ private fun ShoreLabel(text: String) {
 }
 
 @Composable
-private fun SpeedChip(label: String) {
+private fun StageChip(label: String) {
     Box(
         modifier = Modifier
-            .size(width = 40.dp, height = 20.dp)
+            .widthIn(min = 48.dp, max = 120.dp)
+            .height(20.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(GraniteFill)
-            .border(1.dp, GoldAccent.copy(alpha = 0.55f), RoundedCornerShape(8.dp)),
+            .border(1.dp, GoldAccent.copy(alpha = 0.55f), RoundedCornerShape(8.dp))
+            .padding(horizontal = 6.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
             color = Color(0xFF5C4033),
-            fontSize = 10.sp,
-            fontWeight = FontWeight.ExtraBold
+            fontSize = 9.sp,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <inset xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/ram_setu_pathar"
-    android:insetLeft="18%"
-    android:insetTop="22%"
-    android:insetRight="18%"
-    android:insetBottom="22%" />
+    android:insetLeft="6%"
+    android:insetTop="6%"
+    android:insetRight="6%"
+    android:insetBottom="6%" />

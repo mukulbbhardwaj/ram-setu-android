@@ -2,8 +2,10 @@ package com.vanarsena.ramsetu.ui.components
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -20,11 +22,12 @@ fun DrawScope.drawStone(
     stone: Stone,
     laneWidth: Float,
     screenHeight: Float,
-    stoneImage: ImageBitmap
+    stoneImage: ImageBitmap,
+    stoneTint: Color = Color.White
 ) {
     val (stoneWidth, stoneHeight) = stoneSize(laneWidth)
 
-    val xCenter = (stone.lane + 0.5f) * laneWidth
+    val xCenter = (stone.lane + 0.5f + stone.bobLaneOffset) * laneWidth
     val yCenter = stone.yProgress * screenHeight
 
     val left = xCenter - stoneWidth / 2f
@@ -64,6 +67,12 @@ fun DrawScope.drawStone(
                 )
             }
 
+            val tintFilter = if (stoneTint == Color.White) {
+                null
+            } else {
+                ColorFilter.tint(stoneTint, BlendMode.Modulate)
+            }
+
             drawImage(
                 image = stoneImage,
                 dstOffset = IntOffset(left.roundToInt(), top.roundToInt()),
@@ -71,7 +80,8 @@ fun DrawScope.drawStone(
                     stoneWidth.roundToInt().coerceAtLeast(1),
                     stoneHeight.roundToInt().coerceAtLeast(1)
                 ),
-                alpha = stone.alpha
+                alpha = stone.alpha,
+                colorFilter = tintFilter
             )
         }
     }

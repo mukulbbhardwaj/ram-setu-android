@@ -1,6 +1,5 @@
 package com.vanarsena.ramsetu
 
-import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,9 +8,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import com.vanarsena.ramsetu.ui.ProvideAppLanguage
 import com.vanarsena.ramsetu.audio.AudioEngine
 import com.vanarsena.ramsetu.audio.HapticManager
 import com.vanarsena.ramsetu.data.PreferencesManager
@@ -21,7 +19,6 @@ import com.vanarsena.ramsetu.ui.screens.GameScreen
 import com.vanarsena.ramsetu.ui.screens.MainMenuScreen
 import com.vanarsena.ramsetu.ui.theme.OceanDeep
 import com.vanarsena.ramsetu.ui.theme.RamSetuTheme
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
@@ -32,8 +29,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val localizedContext = localizedContext(viewModel.language)
-            CompositionLocalProvider(LocalContext provides localizedContext) {
+            ProvideAppLanguage(viewModel.language) {
                 RamSetuTheme {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
@@ -60,14 +56,6 @@ class MainActivity : ComponentActivity() {
         viewModel.gameEngine.persistInterruptedRun()
     }
 
-    @Composable
-    private fun localizedContext(languageTag: String): android.content.Context {
-        val base = LocalContext.current
-        val locale = Locale.forLanguageTag(languageTag)
-        val config = Configuration(base.resources.configuration)
-        config.setLocale(locale)
-        return base.createConfigurationContext(config)
-    }
 }
 
 @Composable

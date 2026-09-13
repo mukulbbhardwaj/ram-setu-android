@@ -1,16 +1,20 @@
 package com.vanarsena.ramsetu
 
 import com.vanarsena.ramsetu.data.HapticIntensity
+import com.vanarsena.ramsetu.engine.BRIDGE_STONES_PER_LAP
 import com.vanarsena.ramsetu.engine.HitGrade
 import com.vanarsena.ramsetu.engine.HIT_ZONE_Y
-import com.vanarsena.ramsetu.engine.SpeedTiers
+import com.vanarsena.ramsetu.engine.SetuStage
 import com.vanarsena.ramsetu.engine.Stone
 import com.vanarsena.ramsetu.engine.bridgeProgressFraction
 import com.vanarsena.ramsetu.engine.computeBridgeLap
 import com.vanarsena.ramsetu.engine.consumeSpawnTime
+import com.vanarsena.ramsetu.engine.difficultyAt
 import com.vanarsena.ramsetu.engine.findLowestStoneInLane
 import com.vanarsena.ramsetu.engine.findTappedStone
 import com.vanarsena.ramsetu.engine.gradeHit
+import com.vanarsena.ramsetu.engine.setuStageForScore
+import com.vanarsena.ramsetu.engine.stageAllowsDoubleSpawn
 import com.vanarsena.ramsetu.engine.stoneSize
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -22,34 +26,43 @@ import org.junit.Test
 class GameEngineTest {
 
     @Test
-    fun testSpeedTiersProgression() {
-        assertEquals(5, SpeedTiers.size)
+    fun difficultyStartsFasterThanLegacyTierZero() {
+        val start = difficultyAt(0)
+        assertEquals(900L, start.spawnIntervalMs)
+        assertEquals(2800L, start.fallDurationMs)
+        assertTrue(start.spawnIntervalMs < 1000L)
+        assertTrue(start.fallDurationMs < 3400L)
+    }
 
-        // Tier 0 (Default)
-        val tier0 = SpeedTiers[0]
-        assertEquals(0, tier0.minScore)
-        assertEquals(1000L, tier0.spawnIntervalMs)
-        assertEquals(3400L, tier0.fallDurationMs)
+    @Test
+    fun difficultyIncreasesWithScore() {
+        val early = difficultyAt(0)
+        val mid = difficultyAt(50)
+        val late = difficultyAt(300)
+        assertTrue(mid.spawnIntervalMs < early.spawnIntervalMs)
+        assertTrue(mid.fallDurationMs < early.fallDurationMs)
+        assertTrue(late.spawnIntervalMs <= mid.spawnIntervalMs)
+        assertTrue(late.fallDurationMs <= mid.fallDurationMs)
+        assertEquals(320L, late.spawnIntervalMs)
+        assertEquals(1050L, late.fallDurationMs)
+    }
 
-        // Tier 1 (Score 70)
-        val tier1 = SpeedTiers[1]
-        assertEquals(70, tier1.minScore)
-        assertEquals(850L, tier1.spawnIntervalMs)
+    @Test
+    fun setuStageBoundariesMatchFiveDayCampaign() {
+        assertEquals(SetuStage.DAY1, setuStageForScore(0))
+        assertEquals(SetuStage.DAY1, setuStageForScore(19))
+        assertEquals(SetuStage.DAY2, setuStageForScore(20))
+        assertEquals(SetuStage.DAY3, setuStageForScore(50))
+        assertEquals(SetuStage.DAY4, setuStageForScore(85))
+        assertEquals(SetuStage.DAY5, setuStageForScore(125))
+        assertEquals(SetuStage.YATRA, setuStageForScore(170))
+    }
 
-        // Tier 2 (Score 150)
-        val tier2 = SpeedTiers[2]
-        assertEquals(150, tier2.minScore)
-        assertEquals(720L, tier2.spawnIntervalMs)
-
-        // Tier 3 (Score 400)
-        val tier3 = SpeedTiers[3]
-        assertEquals(400, tier3.minScore)
-        assertEquals(600L, tier3.spawnIntervalMs)
-
-        // Tier 4 (Score 800)
-        val tier4 = SpeedTiers[4]
-        assertEquals(800, tier4.minScore)
-        assertEquals(500L, tier4.spawnIntervalMs)
+    @Test
+    fun doubleSpawnOnlyFromDayThree() {
+        assertFalse(stageAllowsDoubleSpawn(SetuStage.DAY1))
+        assertFalse(stageAllowsDoubleSpawn(SetuStage.DAY2))
+        assertTrue(stageAllowsDoubleSpawn(SetuStage.DAY3))
     }
 
     @Test
@@ -93,21 +106,22 @@ class GameEngineTest {
     }
 
     @Test
-    fun bridgeLapDoesNotResetAtHundred() {
+    fun bridgeLapUsesOneHundredSeventyStoneCrossing() {
+        assertEquals(170, BRIDGE_STONES_PER_LAP)
         assertEquals(1, computeBridgeLap(0))
-        assertEquals(1, computeBridgeLap(99))
-        assertEquals(1, computeBridgeLap(100))
-        assertEquals(2, computeBridgeLap(101))
-        assertEquals(1f, bridgeProgressFraction(100), 0.001f)
-        assertEquals(0.01f, bridgeProgressFraction(101), 0.001f)
+        assertEquals(1, computeBridgeLap(169))
+        assertEquals(1, computeBridgeLap(170))
+        assertEquals(2, computeBridgeLap(171))
+        assertEquals(1f, bridgeProgressFraction(170), 0.001f)
+        assertEquals(1f / 170f, bridgeProgressFraction(171), 0.001f)
     }
 
     @Test
     fun stoneKeepsSpawnFallDuration() {
-        val stone = Stone(id = 1L, lane = 0, fallDurationMs = 3400L)
-        assertEquals(3400L, stone.fallDurationMs)
-        val faster = Stone(id = 2L, lane = 1, fallDurationMs = 1650L)
-        assertEquals(1650L, faster.fallDurationMs)
+        val stone = Stone(id = 1L, lane = 0, fallDurationMs = 2800L)
+        assertEquals(2800L, stone.fallDurationMs)
+        val faster = Stone(id = 2L, lane = 1, fallDurationMs = 1200L)
+        assertEquals(1200L, faster.fallDurationMs)
     }
 
     @Test

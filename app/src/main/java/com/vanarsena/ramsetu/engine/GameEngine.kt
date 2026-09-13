@@ -14,6 +14,7 @@ import com.vanarsena.ramsetu.ui.theme.GoldAccent
 import com.vanarsena.ramsetu.ui.theme.OceanWaveFoam
 import com.vanarsena.ramsetu.ui.theme.SaffronLight
 import com.vanarsena.ramsetu.ui.theme.SindoorRed
+import kotlin.math.sin
 import kotlin.random.Random
 
 class GameEngine(
@@ -33,7 +34,7 @@ class GameEngine(
     var maxCombo by mutableIntStateOf(0)
         private set
 
-    var currentTier by mutableStateOf(SpeedTiers[0])
+    var currentStage by mutableStateOf(SetuStage.DAY1)
         private set
 
     var bridgeProgress by mutableFloatStateOf(0f)
@@ -54,6 +55,12 @@ class GameEngine(
     var missFlash by mutableFloatStateOf(0f)
         private set
 
+    var stageBannerAlpha by mutableFloatStateOf(0f)
+        private set
+
+    var stageBannerStage by mutableStateOf<SetuStage?>(null)
+        private set
+
     var lastUnlockedAchievement by mutableStateOf<Achievement?>(null)
 
     val stones = mutableStateListOf<Stone>()
@@ -64,6 +71,9 @@ class GameEngine(
     private var timeSinceLastSpawnMs = 0L
     private var lastSpawnedLane = -1
     private var physicsAccumulator = 0f
+    private var gameTimeSec = 0f
+    private var stageBannerTimer = 0f
+    var reduceMotion = false
 
     fun startGame() {
         resetRunState()
@@ -81,7 +91,7 @@ class GameEngine(
                 fallDurationMs = 24_000L
             )
         } else {
-            timeSinceLastSpawnMs = currentTier.spawnIntervalMs
+            timeSinceLastSpawnMs = difficultyAt(score).spawnIntervalMs
         }
     }
 
@@ -124,7 +134,7 @@ class GameEngine(
                 score = score,
                 combo = combo,
                 maxCombo = maxCombo,
-                tierLevel = currentTier.level
+                tierLevel = currentStage.ordinal
             )
         } else {
             preferencesManager.clearInterruptedRun()
@@ -137,7 +147,7 @@ class GameEngine(
         score = snapshot.score
         combo = snapshot.combo
         maxCombo = snapshot.maxCombo
-        currentTier = SpeedTiers.firstOrNull { it.level == snapshot.tierLevel } ?: SpeedTiers[0]
+        currentStage = setuStageForScore(score)
         bridgeProgress = bridgeProgressFraction(score)
         bridgeLap = computeBridgeLap(score)
         status = GameStatus.PAUSED
@@ -200,6 +210,18 @@ class GameEngine(
 
     private fun step(dt: Float) {
         missFlash = (missFlash - dt * 3.2f).coerceAtLeast(0f)
+        if (status == GameStatus.PLAYING) {
+            gameTimeSec += dt
+        }
+
+        if (stageBannerTimer > 0f) {
+            stageBannerTimer = (stageBannerTimer - dt).coerceAtLeast(0f)
+            stageBannerAlpha = (stageBannerTimer / STAGE_BANNER_SECONDS).coerceIn(0f, 1f)
+            if (stageBannerTimer <= 0f) {
+                stageBannerStage = null
+                stageBannerAlpha = 0f
+            }
+        }
 
         if (status == GameStatus.COUNTDOWN) {
             countdownRemaining = (countdownRemaining - dt).coerceAtLeast(0f)
@@ -208,6 +230,7 @@ class GameEngine(
                 audioEngine.resumeMusic()
             }
             updateTappedStoneFade(dt)
+            updateStoneMotion(dt)
             updateParticles(dt)
             updatePopups(dt)
             return
@@ -217,9 +240,10 @@ class GameEngine(
 
         if (!isTutorial) {
             timeSinceLastSpawnMs += (dt * 1000f).toLong()
-            val tick = consumeSpawnTime(timeSinceLastSpawnMs, currentTier.spawnIntervalMs)
+            val spawnInterval = difficultyAt(score).spawnIntervalMs
+            val tick = consumeSpawnTime(timeSinceLastSpawnMs, spawnInterval)
             timeSinceLastSpawnMs = tick.remainderMs
-            repeat(tick.spawnCount) { spawnStone() }
+            repeat(tick.spawnCount) { spawnWave() }
         }
 
         val iterator = stones.listIterator()
@@ -240,8 +264,21 @@ class GameEngine(
             }
         }
 
+        updateStoneMotion(dt)
         updateParticles(dt)
         updatePopups(dt)
+    }
+
+    private fun updateStoneMotion(dt: Float) {
+        if (!stageAllowsStoneBob(currentStage, reduceMotion)) {
+            stones.forEach { it.bobLaneOffset = 0f }
+            return
+        }
+        for (stone in stones) {
+            if (stone.isTapped) continue
+            stone.bobLaneOffset =
+                sin(gameTimeSec * 3.1f + stone.id * 0.37f) * STONE_BOB_LANE_FRACTION
+        }
     }
 
     private fun updateTappedStoneFade(dt: Float) {
@@ -281,6 +318,7 @@ class GameEngine(
     private fun collectStone(targetStone: Stone) {
         val grade = gradeHit(targetStone.yProgress)
         targetStone.isTapped = true
+        val previousStage = setuStageForScore(score)
         score++
         combo++
         if (grade == HitGrade.PERFECT) combo++
@@ -297,13 +335,15 @@ class GameEngine(
         audioEngine.playStoneTap(combo)
 
         spawnTapParticles(lane = targetStone.lane, yProgress = targetStone.yProgress)
-        comboPopups.add(
-            ComboPopup(
-                text = hitGradeLabel(grade),
-                x = (targetStone.lane + 0.5f) / LANE_COUNT,
-                y = targetStone.yProgress - 0.04f
+        if (grade != HitGrade.OK) {
+            comboPopups.add(
+                ComboPopup(
+                    text = hitGradeLabel(grade),
+                    x = (targetStone.lane + 0.5f) / LANE_COUNT,
+                    y = targetStone.yProgress - 0.04f
+                )
             )
-        )
+        }
         handleComboMilestone(lane = targetStone.lane, yProgress = targetStone.yProgress)
         if (completedLap) {
             hapticManager.playComboMilestone()
@@ -315,7 +355,7 @@ class GameEngine(
                 )
             )
         }
-        checkSpeedTier()
+        advanceStageIfNeeded(previousStage)
         if (isTutorial) {
             isTutorial = false
             preferencesManager.hasSeenTutorial = true
@@ -331,10 +371,50 @@ class GameEngine(
         hapticManager.playMiss()
     }
 
+    private fun spawnWave() {
+        val fallDurationMs = difficultyAt(score).fallDurationMs
+        val lane = nextLane()
+        spawnStone(lane = lane, fallDurationMs = fallDurationMs)
+        val stage = setuStageForScore(score)
+        if (stageAllowsDoubleSpawn(stage) && Random.nextFloat() < DOUBLE_SPAWN_CHANCE) {
+            var lane2 = nextLane()
+            if (lane2 == lane) {
+                lane2 = (lane + 1) % LANE_COUNT
+            }
+            spawnStone(lane = lane2, fallDurationMs = fallDurationMs)
+            if (stage.ordinal >= SetuStage.DAY3.ordinal) {
+                spawnSplashAtHitLine(lane2)
+            }
+        }
+    }
+
+    private fun spawnSplashAtHitLine(lane: Int) {
+        val laneCenter = (lane + 0.5f) / LANE_COUNT
+        for (i in 0 until 8) {
+            val angle = Random.nextDouble(Math.PI * 0.15, Math.PI * 0.85)
+            val speed = Random.nextFloat() * 0.25f + 0.08f
+            val vx = (kotlin.math.cos(angle) * speed).toFloat()
+            val vy = (-kotlin.math.sin(angle) * speed).toFloat()
+            val life = Random.nextFloat() * 0.35f + 0.2f
+            particles.add(
+                Particle(
+                    x = laneCenter,
+                    y = HIT_ZONE_Y,
+                    vx = vx,
+                    vy = vy,
+                    color = OceanWaveFoam,
+                    size = Random.nextFloat() * 5f + 3f,
+                    maxLife = life,
+                    life = life
+                )
+            )
+        }
+    }
+
     private fun spawnStone(
         lane: Int = nextLane(),
         yProgress: Float = -0.15f,
-        fallDurationMs: Long = currentTier.fallDurationMs
+        fallDurationMs: Long = difficultyAt(score).fallDurationMs
     ) {
         lastSpawnedLane = lane
         val spin = if (nextStoneId % 2L == 0L) 18f else -22f
@@ -406,31 +486,27 @@ class GameEngine(
         }
     }
 
-    private fun checkSpeedTier() {
-        val nextTier = SpeedTiers.lastOrNull { score >= it.minScore } ?: SpeedTiers[0]
-        if (nextTier.level > currentTier.level) {
-            currentTier = nextTier
-            hapticManager.playSpeedLevelUp()
-            comboPopups.add(
-                ComboPopup(
-                    text = "गति बढ़ी: ${currentTier.label}!",
-                    x = 0.5f,
-                    y = 0.35f
-                )
-            )
-        }
+    private fun advanceStageIfNeeded(previousStage: SetuStage) {
+        val nextStage = setuStageForScore(score)
+        if (nextStage == previousStage) return
+        currentStage = nextStage
+        hapticManager.playSpeedLevelUp()
+        stageBannerStage = nextStage
+        stageBannerTimer = STAGE_BANNER_SECONDS
+        stageBannerAlpha = 1f
     }
 
     private fun checkAchievements() {
+        val stage = setuStageForScore(score)
         val candidates = listOf(
             Achievement.FIRST_STONE to (score >= 1),
             Achievement.SCORE_TEN to (score >= 10),
             Achievement.COMBO_TEN to (maxCombo >= 10),
             Achievement.COMBO_FIFTY to (maxCombo >= 50),
             Achievement.COMBO_HUNDRED to (maxCombo >= 100),
-            Achievement.SPEED_FIFTEEN to (currentTier.level >= 1),
-            Achievement.SPEED_TWO to (currentTier.level >= 2),
-            Achievement.SPEED_THREE to (currentTier.level >= 4),
+            Achievement.SPEED_FIFTEEN to (stage.ordinal >= SetuStage.DAY2.ordinal),
+            Achievement.SPEED_TWO to (stage.ordinal >= SetuStage.DAY3.ordinal),
+            Achievement.SPEED_THREE to (score >= SetuStage.YATRA.minScore),
             Achievement.TOTAL_FIVE_HUNDRED to (preferencesManager.totalStones + score >= 500)
         )
         for ((achievement, unlocked) in candidates) {
@@ -467,7 +543,7 @@ class GameEngine(
         score = 0
         combo = 0
         maxCombo = 0
-        currentTier = SpeedTiers[0]
+        currentStage = SetuStage.DAY1
         bridgeProgress = 0f
         bridgeLap = 1
         isNewHighScore = false
@@ -479,5 +555,9 @@ class GameEngine(
         missFlash = 0f
         lastUnlockedAchievement = null
         isTutorial = false
+        gameTimeSec = 0f
+        stageBannerTimer = 0f
+        stageBannerAlpha = 0f
+        stageBannerStage = null
     }
 }

@@ -71,6 +71,9 @@ import com.vanarsena.ramsetu.engine.GameEngine
 import com.vanarsena.ramsetu.engine.GameStatus
 import com.vanarsena.ramsetu.engine.HIT_ZONE_Y
 import com.vanarsena.ramsetu.engine.PERFECT_WINDOW
+import com.vanarsena.ramsetu.engine.paletteForStage
+import com.vanarsena.ramsetu.ui.setuStageBanner
+import com.vanarsena.ramsetu.ui.setuStageShortName
 import com.vanarsena.ramsetu.ui.components.BridgeProgressBar
 import com.vanarsena.ramsetu.ui.components.OceanBackground
 import com.vanarsena.ramsetu.ui.components.drawComboPopups
@@ -101,6 +104,11 @@ fun GameScreen(
     val pauseCd = stringResource(R.string.pause)
     val keepAwake = gameEngine.status == GameStatus.PLAYING ||
         gameEngine.status == GameStatus.COUNTDOWN
+    val stoneTint = paletteForStage(gameEngine.currentStage).stoneTint
+
+    LaunchedEffect(reduceMotion) {
+        gameEngine.reduceMotion = reduceMotion
+    }
 
     DisposableEffect(keepAwake) {
         view.keepScreenOn = keepAwake
@@ -140,7 +148,10 @@ fun GameScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        OceanBackground(reduceMotion = reduceMotion)
+        OceanBackground(
+            stage = gameEngine.currentStage,
+            reduceMotion = reduceMotion
+        )
 
         Column(
             modifier = Modifier
@@ -263,7 +274,8 @@ fun GameScreen(
                                 stone = stone,
                                 laneWidth = laneWidth,
                                 screenHeight = height,
-                                stoneImage = stoneImage
+                                stoneImage = stoneImage,
+                                stoneTint = stoneTint
                             )
                         }
 
@@ -289,7 +301,7 @@ fun GameScreen(
                             gameEngine.countdownRemaining > 2f -> "3"
                             gameEngine.countdownRemaining > 1f -> "2"
                             gameEngine.countdownRemaining > 0.35f -> "1"
-                            else -> stringResource(R.string.countdown_go)
+                            else -> stringResource(R.string.countdown_start)
                         }
                         Text(
                             text = label,
@@ -297,6 +309,28 @@ fun GameScreen(
                             fontSize = 64.sp,
                             fontWeight = FontWeight.ExtraBold,
                             modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+
+                    val bannerStage = gameEngine.stageBannerStage
+                    if (bannerStage != null && gameEngine.stageBannerAlpha > 0.05f) {
+                        Text(
+                            text = setuStageBanner(bannerStage),
+                            color = GoldAccent.copy(alpha = gameEngine.stageBannerAlpha),
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(top = 72.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(CardSurfaceDark.copy(alpha = 0.85f * gameEngine.stageBannerAlpha))
+                                .border(
+                                    1.dp,
+                                    GoldAccent.copy(alpha = 0.7f * gameEngine.stageBannerAlpha),
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .padding(horizontal = 20.dp, vertical = 10.dp)
                         )
                     }
 
@@ -509,7 +543,7 @@ private fun GameHud(
 
         BridgeProgressBar(
             progress = gameEngine.bridgeProgress,
-            speedLabel = gameEngine.currentTier.label,
+            stageLabel = setuStageShortName(gameEngine.currentStage),
             lap = gameEngine.bridgeLap
         )
     }

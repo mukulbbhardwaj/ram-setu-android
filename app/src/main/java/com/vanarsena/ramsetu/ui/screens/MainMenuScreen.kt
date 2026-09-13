@@ -189,9 +189,10 @@ fun MainMenuScreen(
                 Image(
                     painter = painterResource(id = R.drawable.ram_setu_pathar),
                     contentDescription = stringResource(R.string.logo_cd),
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .size(220.dp, 120.dp)
-                        .shadow(16.dp, RoundedCornerShape(100.dp))
+                        .size(220.dp)
+                        .shadow(16.dp, CircleShape)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -263,6 +264,7 @@ fun MainMenuScreen(
 
         if (showKathaDialog) {
             KathaDialog(
+                language = language,
                 hapticManager = hapticManager,
                 onDismiss = { showKathaDialog = false }
             )
@@ -281,6 +283,7 @@ fun MainMenuScreen(
 
         if (showAchievementsDialog) {
             AchievementsDialog(
+                language = language,
                 preferencesManager = preferencesManager,
                 hapticManager = hapticManager,
                 onDismiss = { showAchievementsDialog = false }

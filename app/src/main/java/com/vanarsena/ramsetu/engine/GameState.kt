@@ -17,28 +17,13 @@ enum class HitGrade {
     OK
 }
 
-data class SpeedTier(
-    val level: Int,
-    val minScore: Int,
-    val spawnIntervalMs: Long,
-    val fallDurationMs: Long,
-    val label: String
-)
-
-val SpeedTiers = listOf(
-    SpeedTier(level = 0, minScore = 0, spawnIntervalMs = 1000L, fallDurationMs = 3400L, label = "1.0x"),
-    SpeedTier(level = 1, minScore = 70, spawnIntervalMs = 850L, fallDurationMs = 2900L, label = "1.5x"),
-    SpeedTier(level = 2, minScore = 150, spawnIntervalMs = 720L, fallDurationMs = 2400L, label = "2.0x"),
-    SpeedTier(level = 3, minScore = 400, spawnIntervalMs = 600L, fallDurationMs = 2000L, label = "2.5x"),
-    SpeedTier(level = 4, minScore = 800, spawnIntervalMs = 500L, fallDurationMs = 1650L, label = "3.0x")
-)
-
 const val LANE_COUNT = 4
 const val HIT_ZONE_Y = 0.88f
 const val MISS_Y = 1.05f
 const val PERFECT_WINDOW = 0.06f
 const val GOOD_WINDOW = 0.12f
-const val BRIDGE_STONES_PER_LAP = 100
+/** One Rameswaram→Lanka crossing (~five construction days in Valmiki Yuddha Kanda 22). */
+const val BRIDGE_STONES_PER_LAP = 170
 const val FIXED_STEP_SEC = 1f / 60f
 const val MAX_PHYSICS_STEPS = 4
 const val SPAWN_CATCH_UP_MAX = 3
@@ -101,8 +86,9 @@ data class Stone(
     var alpha: Float = 1f,
     var scale: Float = 1f,
     var rotation: Float = 0f,
-    val fallDurationMs: Long = SpeedTiers[0].fallDurationMs,
-    val spinDegPerSec: Float = 0f
+    val fallDurationMs: Long = difficultyAt(0).fallDurationMs,
+    val spinDegPerSec: Float = 0f,
+    var bobLaneOffset: Float = 0f
 )
 
 /** Shared visual size so rendering and hit-testing stay in lockstep. */
@@ -134,7 +120,7 @@ fun stoneSize(laneWidth: Float): Pair<Float, Float> {
 
 fun Stone.bounds(laneWidth: Float, screenHeight: Float, slopPx: Float = 0f): StoneBounds {
     val (stoneWidth, stoneHeight) = stoneSize(laneWidth)
-    val xCenter = (lane + 0.5f) * laneWidth
+    val xCenter = (lane + 0.5f + bobLaneOffset) * laneWidth
     val yCenter = yProgress * screenHeight
     return StoneBounds(
         left = xCenter - stoneWidth / 2f - slopPx,
