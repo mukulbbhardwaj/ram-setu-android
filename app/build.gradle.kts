@@ -20,8 +20,8 @@ android {
         applicationId = "com.vanarsena.ramsetu"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -60,6 +60,31 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+}
+
+val playStoreBundlesDir = rootProject.layout.projectDirectory.dir("play-store/bundles")
+
+afterEvaluate {
+    tasks.register("archiveReleaseBundleToPlayStore") {
+        group = "publishing"
+        description = "Copy release AAB to play-store/bundles with version in the filename."
+        dependsOn("bundleRelease")
+        doLast {
+            val versionName = android.defaultConfig.versionName
+            val versionCode = android.defaultConfig.versionCode
+            val source = layout.buildDirectory.file("outputs/bundle/release/app-release.aab").get().asFile
+            if (!source.exists()) {
+                throw GradleException("Release bundle not found: ${source.path}")
+            }
+            val destDir = playStoreBundlesDir.asFile.apply { mkdirs() }
+            val dest = destDir.resolve("ram-setu-v${versionName}-build${versionCode}.aab")
+            source.copyTo(dest, overwrite = true)
+            logger.lifecycle("Archived for Play upload: ${dest.absolutePath}")
+        }
+    }
+    tasks.named("bundleRelease").configure {
+        finalizedBy("archiveReleaseBundleToPlayStore")
     }
 }
 

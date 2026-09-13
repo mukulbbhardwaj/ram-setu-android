@@ -2,9 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-export JAVA_HOME="${JAVA_HOME:-/Applications/Android Studio.app/Contents/jbr/Contents/Home}"
-SDK="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
-export PATH="$SDK/platform-tools:$SDK/emulator:$PATH"
+# shellcheck source=android-env.sh
+source "$ROOT/scripts/android-env.sh"
 
 if ! command -v adb >/dev/null; then
   echo "adb not found. Set ANDROID_HOME or install Android SDK platform-tools."
